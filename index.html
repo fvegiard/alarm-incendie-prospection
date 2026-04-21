@@ -1973,6 +1973,200 @@ let DATA = null;
       const a = document.createElement("a");
       a.href = url;
       a.download = `prospection_montreal_filtre_2026-03-16.csv`;
+      mount.innerHTML = `
+        <div class="detail">
+          <div class="detail-card">
+            <div class="detail-top">
+              <div>
+                <h3>${escapeHtml(record.immeuble)}</h3>
+                <div class="muted">${escapeHtml(record.zone)}</div>
+              </div>
+              <div class="badges">
+                ${badge(record.priorite, toneForPriority(record.priorite))}
+                ${badge(record.mode_action, toneForMode(record.mode_action))}
+                ${topTags.join("")}
+              </div>
+            </div>
+            <div class="facts">
+              <div class="fact"><div class="k">Hauteur</div><div class="v">${fmtHeight(record.hauteur_m)}</div></div>
+              <div class="fact"><div class="k">Étages</div><div class="v">${fmtInt(record.etages)}</div></div>
+              <div class="fact"><div class="k">Année</div><div class="v">${fmtInt(record.annee)}</div></div>
+              <div class="fact"><div class="k">Usage</div><div class="v">${escapeHtml(getUsageLabel(record.usage))}</div></div>
+              <div class="fact"><div class="k">Score total</div><div class="v">${fmtInt(record.score_total)}</div></div>
+              <div class="fact"><div class="k">Décideur probable</div><div class="v">${escapeHtml(record.decideur_probable)}</div></div>
+            </div>
+            <div class="row-actions">
+              ${badge(record.statut_public, toneForStatus(record.statut_public))}
+              ${badge(record.segment, record.segment === "Commercial / institutionnel" ? "green" : "cyan")}
+            </div>
+            <div style="margin-top:14px;line-height:1.55">
+              <div><strong>Angle commercial:</strong> ${escapeHtml(record.angle_commercial)}</div>
+              <div style="margin-top:8px"><strong>Raison de priorisation:</strong> ${escapeHtml(record.raison_priorisation)}</div>
+            </div>
+          </div>
+          <div class="detail-card">
+            <h3>Contact admin / gestion</h3>
+            <div class="facts contact-grid">
+              <div class="fact"><div class="k">Canal prioritaire</div><div class="v">${escapeHtml(getContactChannel(record))}</div></div>
+              <div class="fact"><div class="k">Coordonnées à récupérer</div><div class="v">${escapeHtml(getContactChecklist(record))}</div></div>
+              <div class="fact"><div class="k">Carte</div><div class="v"><a href="https://prospection-montreal.netlify.app/${escapeHtml(buildGoogleMapsUrl(record))}" target="_blank" rel="noreferrer">Ouvrir dans Google Maps</a></div></div>
+              <div class="fact"><div class="k">Recherche web</div><div class="v"><a href="https://prospection-montreal.netlify.app/${escapeHtml(buildManagerSearchUrl(record))}" target="_blank" rel="noreferrer">Chercher le gestionnaire / téléphone</a></div></div>
+            </div>
+            <div class="contact-actions">
+              <a class="button" href="https://prospection-montreal.netlify.app/${escapeHtml(buildGoogleMapsUrl(record))}" target="_blank" rel="noreferrer">Google Maps</a>
+              <a class="ghost-btn" href="https://prospection-montreal.netlify.app/${escapeHtml(buildOsmUrl(record))}" target="_blank" rel="noreferrer">OpenStreetMap</a>
+              <a class="ghost-btn" href="https://prospection-montreal.netlify.app/${escapeHtml(record.source_proprietaires)}" target="_blank" rel="noreferrer">Rôle foncier</a>
+              <a class="ghost-btn" href="https://prospection-montreal.netlify.app/${escapeHtml(buildManagerSearchUrl(record))}" target="_blank" rel="noreferrer">Chercher le gestionnaire</a>
+              <a class="ghost-btn" href="https://prospection-montreal.netlify.app/${escapeHtml(buildMailToUrl(record))}">Préparer un courriel</a>
+            </div>
+            <ol class="contact-steps small">
+              <li>Ouvre la carte ou Google Maps pour retrouver le standard, la réception ou le site officiel de l’immeuble.</li>
+              <li>Utilise ensuite le rôle foncier pour confirmer le propriétaire et l’adresse postale de contact.</li>
+              <li>Si le décideur est une firme de gestion, cherche son téléphone et son courriel à partir du nom de l’immeuble et de Montréal.</li>
+            </ol>
+            <div class="contact-note">
+              Le dashboard identifie le décideur probable, mais il ne contient pas directement les numéros de téléphone ni les courriels. Les boutons ci-dessus servent à retrouver rapidement l’administrateur ou le gestionnaire réel.
+            </div>
+            <div style="margin-top:14px;line-height:1.6">
+              <div><strong>Inventaire des tours:</strong> <a href="https://prospection-montreal.netlify.app/${escapeHtml(record.source_inventaire)}" target="_blank" rel="noreferrer">source inventaire</a></div>
+              <div><strong>Cadre RBQ:</strong> <a href="https://prospection-montreal.netlify.app/${escapeHtml(record.source_rbq)}" target="_blank" rel="noreferrer">source RBQ</a></div>
+              <div><strong>Recherche propriétaire:</strong> <a href="https://prospection-montreal.netlify.app/${escapeHtml(record.source_proprietaires)}" target="_blank" rel="noreferrer">Evalweb / rôle foncier</a></div>
+            </div>
+            <div style="margin-top:14px;line-height:1.55">
+              <strong>Prochaine action suggérée:</strong><br/>
+              ${record.segment === "Commercial / institutionnel"
+                ? "Extraire le propriétaire ou gestionnaire, confirmer le décideur, puis proposer un audit initial centré documentation, panneau, essais, séquences et CAN/ULC-S1001."
+                : "Identifier le syndicat ou le gestionnaire, puis proposer une validation documentaire, les essais annuels et un plan de correctifs si requis."}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInventoryTable(filtered){
+      const tbody = $("#inventoryTable tbody");
+      if(!filtered.length){
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty">Aucun immeuble ne correspond aux filtres.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = filtered.map(record => `
+        <tr data-id="${record.id}" class="${record.id === state.selectedId ? "selected" : ""}">
+          <td>${record.rang}</td>
+          <td>
+            <div><strong>${escapeHtml(record.immeuble)}</strong></div>
+            <div class="small muted">${record.top25_ordre ? `Top 25 #${record.top25_ordre}` : (record.condo_ordre ? `Condos #${record.condo_ordre}` : record.mode_action)}</div>
+          </td>
+          <td>${fmtHeight(record.hauteur_m)}</td>
+          <td>${record.annee}</td>
+          <td>${escapeHtml(getUsageLabel(record.usage))}</td>
+          <td>${escapeHtml(record.zone_lettre)}</td>
+          <td>${badge(record.priorite, toneForPriority(record.priorite))}</td>
+          <td>${badge(record.statut_public, toneForStatus(record.statut_public))}</td>
+        </tr>
+      `).join("");
+      tbody.querySelectorAll("tr[data-id]").forEach(row => row.addEventListener("click", () => {
+        state.selectedId = Number(row.dataset.id);
+        update(false);
+      }));
+    }
+
+    function renderZoneCards(){
+      const mount = $("#zoneCards");
+      const zones = [...DATA.zones].sort((a,b) => (b.pipeline_score - a.pipeline_score) || (b.nb_tours - a.nb_tours));
+      mount.innerHTML = zones.map(zone => `
+        <div class="zone-card ${zone.recommandee ? "recommended" : ""}" data-zone="${escapeHtml(zone.zone)}">
+          <h3>${escapeHtml(zone.zone)}</h3>
+          <div class="muted">${zone.recommandee ? "Zone recommandée pour la première vague" : "Zone secondaire / ciblée"}</div>
+          <div class="zone-mini">
+            <span>${zone.nb_tours} tours</span>
+            <span>${zone.tres_elevee + zone.elevee} top priorités</span>
+            <span>Score ${zone.pipeline_score}</span>
+          </div>
+          <div class="small" style="line-height:1.55"><strong>Top 5:</strong> ${escapeHtml(zone.top5_zone)}</div>
+          <div class="small muted" style="margin-top:10px;line-height:1.55">${escapeHtml(zone.strategie_terrain)}</div>
+        </div>
+      `).join("");
+      mount.querySelectorAll(".zone-card").forEach(card => {
+        card.addEventListener("click", () => {
+          state.zone = card.dataset.zone;
+          state.preset = "all";
+          state.cohort = "all";
+          update();
+        });
+      });
+    }
+
+    function renderTopTables(){
+      const topBody = $("#top25Table tbody");
+      topBody.innerHTML = DATA.top25.map(row => `
+        <tr data-immeuble="${escapeHtml(row.immeuble)}">
+          <td>${row.ordre}</td>
+          <td><strong>${escapeHtml(row.immeuble)}</strong></td>
+          <td>${escapeHtml(row.zone_lettre || row.zone.split(" - ")[0])}</td>
+          <td>${escapeHtml(getUsageLabel(row.usage))}</td>
+          <td>${row.annee}</td>
+          <td>${fmtHeight(row.hauteur_m)}</td>
+          <td>${badge(row.priorite, toneForPriority(row.priorite))}</td>
+        </tr>
+      `).join("");
+      topBody.querySelectorAll("tr").forEach(row => row.addEventListener("click", () => selectByBuilding(row.dataset.immeuble)));
+
+      const condoBody = $("#condoTable tbody");
+      condoBody.innerHTML = DATA.condos.map(row => `
+        <tr data-immeuble="${escapeHtml(row.immeuble)}">
+          <td>${row.ordre}</td>
+          <td><strong>${escapeHtml(row.immeuble)}</strong></td>
+          <td>${escapeHtml(row.zone_lettre || row.zone.split(" - ")[0])}</td>
+          <td>${row.annee}</td>
+          <td>${fmtHeight(row.hauteur_m)}</td>
+          <td>${badge(row.priorite, toneForPriority(row.priorite))}</td>
+        </tr>
+      `).join("");
+      condoBody.querySelectorAll("tr").forEach(row => row.addEventListener("click", () => selectByBuilding(row.dataset.immeuble)));
+    }
+
+    function selectByBuilding(name){
+      const found = DATA.inventory.find(r => r.immeuble === name);
+      if(!found) return;
+      state.selectedId = found.id;
+      state.search = found.immeuble;
+      state.preset = "all";
+      state.cohort = "all";
+      update();
+    }
+
+    function renderSources(){
+      const mount = $("#sourcesGrid");
+      mount.innerHTML = DATA.sources.map(source => `
+        <div class="source-card">
+          <h3>${escapeHtml(source.bloc)}</h3>
+          <div class="small" style="line-height:1.55"><strong>Constat:</strong> ${escapeHtml(source.constat)}</div>
+          <div class="small" style="line-height:1.55;margin-top:8px"><strong>Implication commerciale:</strong> ${escapeHtml(source.implication_commerciale)}</div>
+          <div class="small" style="line-height:1.6;margin-top:10px">
+            ${source.source_1 ? `<a href="https://prospection-montreal.netlify.app/${escapeHtml(source.source_1)}" target="_blank" rel="noreferrer">Source 1</a>` : ""}
+            ${source.source_2 ? `${source.source_1 ? " · " : ""}<a href="https://prospection-montreal.netlify.app/${escapeHtml(source.source_2)}" target="_blank" rel="noreferrer">Source 2</a>` : ""}
+          </div>
+          ${source.note ? `<div class="small muted" style="margin-top:8px">${escapeHtml(source.note)}</div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function exportFilteredCsv(){
+      const rows = getFiltered();
+      const headers = [
+        "Rang","Immeuble","Hauteur (m)","Étages","Année","Usage","Zone","Priorité","Statut public","Décideur probable","Angle commercial","Raison de priorisation"
+      ];
+      const csv = [
+        headers.join(";"),
+        ...rows.map(r => [
+          r.rang, q(r.immeuble), r.hauteur_m, r.etages, r.annee, q(getUsageLabel(r.usage)), q(r.zone), q(r.priorite), q(r.statut_public), q(r.decideur_probable), q(r.angle_commercial), q(r.raison_priorisation)
+        ].join(";"))
+      ].join("\n");
+      const blob = new Blob(["\ufeff" + csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `prospection_montreal_filtre_2026-03-16.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1995,40 +2189,49 @@ let DATA = null;
     }
 
     function init(){
-  zoneOrder = [...new Set(DATA.inventory.map(r => r.zone))];
-  state.selectedId = DATA.inventory[0]?.id || null;
-}
+      zoneOrder = [...new Set(DATA.inventory.map(r => r.zone))];
+      state.selectedId = DATA.inventory[0]?.id || null;
+      initSelects();
+      bindControls();
+      if(DATA.zones) renderZoneCards();
+      if(DATA.top25 && DATA.condos) renderTopTables();
+      if(DATA.sources) renderSources();
+      update();
+    }
 
-    const SUPABASE_URL = "YOUR_SUPABASE_URL";
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const SUPABASE_URL = "https://sojvecqkrhatnvspwaub.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvanZlY3FrcmhhdG52c3B3YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTgzNzgsImV4cCI6MjA5MjM3NDM3OH0.YCFulfPMTQm0weHisalk64Eaolaxd0hOWL7FZLt9ATY";
     
-    if (SUPABASE_URL === "YOUR_SUPABASE_URL") {
-      fetch('data.json').then(r => r.json()).then(d => { DATA = d; init(); });
-    } else {
+    Promise.all([
+      fetch('data.json').then(r => r.json()).catch(() => ({})),
       fetch(`${SUPABASE_URL}/rest/v1/buildings?select=*`, {
         headers: {
           'apikey': SUPABASE_ANON_KEY,
           'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
         }
-      }).then(r => r.json()).then(buildings => {
-        DATA = {
-          inventory: buildings,
-          meta: {
-            total_tours: buildings.length,
-            top_prioritaires: buildings.filter(b => b.priorite === 'Très élevée' || b.priorite === 'Élevée').length,
-            audit_ou_validation: buildings.filter(b => b.mode_action && b.mode_action.includes('Audit')).length,
-            commercial_institutionnel: buildings.filter(b => b.segment === 'Commercial / institutionnel').length,
-            condos_syndicats: buildings.filter(b => b.segment === 'Syndicat / condo').length,
-            date_generation: new Date().toISOString().split('T')[0],
-            version_label: "Supabase Live Data"
-          }
-        };
-        init();
-      }).catch(e => {
-        console.error("Supabase fetch failed, falling back to data.json", e);
-        fetch('data.json').then(r => r.json()).then(d => { DATA = d; init(); });
-      });
-    }
+      }).then(r => {
+        if(!r.ok) throw new Error("Supabase fetch failed");
+        return r.json();
+      })
+    ]).then(([localData, buildings]) => {
+      DATA = {
+        ...localData,
+        inventory: buildings,
+        meta: {
+          total_tours: buildings.length,
+          top_prioritaires: buildings.filter(b => b.priorite === 'Très élevée' || b.priorite === 'Élevée').length,
+          audit_ou_validation: buildings.filter(b => b.mode_action && b.mode_action.includes('Audit')).length,
+          commercial_institutionnel: buildings.filter(b => b.segment === 'Commercial / institutionnel').length,
+          condos_syndicats: buildings.filter(b => b.segment === 'Syndicat / condo').length,
+          date_generation: new Date().toISOString().split('T')[0],
+          version_label: "Supabase Live Data"
+        }
+      };
+      init();
+    }).catch(e => {
+      console.error("Supabase fetch failed, falling back to data.json", e);
+      fetch('data.json').then(r => r.json()).then(d => { DATA = d; init(); });
+    });
   </script>
 </body>
 </html>

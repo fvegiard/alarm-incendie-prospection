@@ -27,9 +27,10 @@ async function migrateData() {
     console.log(`Found ${data.inventory.length} records. Uploading to Supabase...`);
 
     // Insert data into 'buildings' table
+    const cleanData = data.inventory.map(({ coord, ...rest }) => rest);
     const { data: insertedData, error } = await supabase
       .from('buildings')
-      .upsert(data.inventory, { onConflict: 'id' });
+      .upsert(cleanData, { onConflict: 'id' });
 
     if (error) {
       throw error;
