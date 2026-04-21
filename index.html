@@ -1481,7 +1481,7 @@ let DATA = null;
         return;
       }
       const latLngs = [];
-      filtered.forEach(record => {
+      filtered.filter(r => r.latitude && r.longitude).forEach(record => {
         const selected = record.id === state.selectedId;
         const marker = window.L.circleMarker([record.latitude, record.longitude], {
           radius: Math.max(6, 6 + ((record.hauteur_m - 100) / 130) * 8),
@@ -1507,7 +1507,7 @@ let DATA = null;
         marker.addTo(mapState.layer);
         latLngs.push([record.latitude, record.longitude]);
       });
-      if(signature !== mapState.signature){
+      if(signature !== mapState.signature && latLngs.length > 0){
         mapState.instance.fitBounds(window.L.latLngBounds(latLngs).pad(0.25), {
           animate: false,
           maxZoom: 16
@@ -1734,11 +1734,12 @@ let DATA = null;
         label => state.priority === label
       );
 
-      const statusRows = countBy(filtered, r => r.statut_public, [
+      const statusRows = countBy(filtered, r => r.statut_public || "Inconnu", [
         "1999 et antérieur – audit prioritaire",
         "2000-2016 – aucune preuve publique trouvée",
         "Récent 2017-2023 – à valider",
-        "Neuf 2024-2025 – faible probabilité d’écart public"
+        "Neuf 2024-2025 – faible probabilité d’écart public",
+        "Inconnu"
       ]);
       renderBars("statusBars", statusRows,
         label => ({ 
@@ -1749,7 +1750,7 @@ let DATA = null;
         }[label] || "var(--slate)"),
         key => { state.status = key === state.status ? "all" : key; state.preset = "all"; state.cohort = "all"; update(); },
         label => state.status === label,
-        label => label.replace(" – ", " · ")
+        label => (label || "Inconnu").replace(" – ", " · ")
       );
 
       const usageOrder = ["Office","Residential","Mixed-use","Hotel","Health"];
