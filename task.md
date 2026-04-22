@@ -1,12 +1,12 @@
-- `[x]` Phase 1: Environment & Tooling Setup
-  - `[x]` Setup Biome (`biome.json`)
-  - `[x]` Modify `prospection_workflow_2026.ts` for sub-agents & 2026 data
-- `[ ]` Phase 2: UI & Map Fixes
-  - `[ ]` Update `index.html` OSM RTE map layer and fallback
-  - `[ ]` Update `index.html` Laval rank logic
-- `[ ]` Phase 3: Execution & Deployment
-  - `[ ]` Run workflow and merge to `data.json`
-  - `[ ]` Create `git_auto_commit.sh`
-- `[ ]` Verification
-  - `[ ]` Run Biome check
-  - `[ ]` Verify DOM / Netlify deployment
+- [x] Phase 1: Environment & Tooling Setup
+  - [x] Setup Biome (`biome.json`)
+  - [x] Modify `prospection_workflow_2026.ts` for sub-agents & 2026 data
+- [x] Phase 2: UI & Map Fixes
+  - [x] Update `index.html` OSM RTE map layer and fallback
+  - [x] Update `index.html` Laval rank logic
+- [x] Phase 3: Execution & Deployment
+  - [x] Run workflow and merge to `data.json`
+  - [x] Create `git_auto_commit.sh`
+- [x] Verification
+  - [x] Run Biome check
+  - [x] Verify DOM / Netlify deployment
