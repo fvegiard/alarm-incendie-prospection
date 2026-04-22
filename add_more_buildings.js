@@ -1,147 +1,177 @@
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+const fs = require('fs');
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+const dataPath = 'data.json';
+const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
 
 const newBuildings = [
-  {
-    "id": 101,
-    "rang": 75,
-    "immeuble": "Urbania Condos (Laval)",
-    "hauteur_m": 50,
-    "etages": 16,
-    "annee": 2010,
-    "usage": "Residential",
-    "latitude": 45.5606,
-    "longitude": -73.7145,
-    "zone": "Laval - Centre",
-    "zone_lettre": "L",
-    "age_2026": 16,
-    "score_anciennete": 2,
-    "score_usage": 1,
-    "score_hauteur": 1,
-    "score_total": 4,
-    "priorite": "Moyenne",
-    "statut_public": "Validation requise",
-    "decideur_probable": "Syndicat de copropriété",
-    "angle_commercial": "Maintenance et validation",
-    "raison_priorisation": "Condo",
-    "mode_action": "Validation",
-    "segment": "Syndicat / condo"
-  },
-  {
-    "id": 102,
-    "rang": 76,
-    "immeuble": "Complexe Saint-Charles (Longueuil)",
-    "hauteur_m": 80,
-    "etages": 25,
-    "annee": 1990,
-    "usage": "Office / Residential",
-    "latitude": 45.5348,
-    "longitude": -73.5135,
-    "zone": "Longueuil - Métro",
-    "zone_lettre": "S",
-    "age_2026": 36,
-    "score_anciennete": 4,
-    "score_usage": 3,
-    "score_hauteur": 2,
-    "score_total": 9,
-    "priorite": "Élevée",
-    "statut_public": "1999 et antérieur – audit prioritaire",
-    "decideur_probable": "Gestionnaire",
-    "angle_commercial": "Audit prioritaire",
-    "raison_priorisation": "Ancien, multi-usage",
-    "mode_action": "Audit prioritaire",
-    "segment": "Commercial / institutionnel"
-  },
-  {
-    "id": 103,
-    "rang": 77,
-    "immeuble": "Tour Port-de-Mer (Longueuil)",
-    "hauteur_m": 90,
-    "etages": 28,
-    "annee": 1974,
-    "usage": "Residential",
-    "latitude": 45.5350,
-    "longitude": -73.5110,
-    "zone": "Longueuil - Métro",
-    "zone_lettre": "S",
-    "age_2026": 52,
-    "score_anciennete": 5,
-    "score_usage": 2,
-    "score_hauteur": 3,
-    "score_total": 10,
-    "priorite": "Très élevée",
-    "statut_public": "Audit très urgent",
-    "decideur_probable": "Syndicat / Gestionnaire",
-    "angle_commercial": "Très ancien bâtiment de grande hauteur",
-    "raison_priorisation": "Âge critique",
-    "mode_action": "Audit prioritaire",
-    "segment": "Syndicat / condo"
-  },
-  {
-    "id": 104,
-    "rang": 78,
-    "immeuble": "Hôpital Charles-Le Moyne (Longueuil)",
-    "hauteur_m": 45,
-    "etages": 10,
-    "annee": 1966,
-    "usage": "Institutionnel",
-    "latitude": 45.4950,
-    "longitude": -73.4739,
-    "zone": "Longueuil - Greenfield Park",
-    "zone_lettre": "S",
-    "age_2026": 60,
-    "score_anciennete": 5,
-    "score_usage": 5,
-    "score_hauteur": 1,
-    "score_total": 11,
-    "priorite": "Très élevée",
-    "statut_public": "Audit très urgent",
-    "decideur_probable": "CISSS de la Montérégie-Centre",
-    "angle_commercial": "Secteur santé critique",
-    "raison_priorisation": "Hôpital très ancien",
-    "mode_action": "Audit prioritaire",
-    "segment": "Commercial / institutionnel"
-  },
-  {
-    "id": 105,
-    "rang": 79,
-    "immeuble": "Solar Uniquartier - Tour Magellan (Brossard)",
-    "hauteur_m": 60,
-    "etages": 20,
-    "annee": 2021,
-    "usage": "Residential",
-    "latitude": 45.4452,
-    "longitude": -73.4357,
-    "zone": "Brossard - Dix30",
-    "zone_lettre": "S",
-    "age_2026": 5,
-    "score_anciennete": 1,
-    "score_usage": 1,
-    "score_hauteur": 2,
-    "score_total": 4,
-    "priorite": "Basse",
-    "statut_public": "Nouveau",
-    "decideur_probable": "Syndicat / Gestionnaire",
-    "angle_commercial": "Information et validation future",
-    "raison_priorisation": "Nouveau bâtiment",
-    "mode_action": "Information",
-    "segment": "Syndicat / condo"
-  }
+    {
+        name: "900 Saint-Jacques (Moxy Hotel)",
+        type: "Mixed-use High-rise",
+        year: 2026,
+        city: "Montreal",
+        lat: 45.498,
+        lng: -73.565,
+        height: 160,
+        floors: 48,
+        usage: "Mixed (Hotel/Residential)",
+        zone: "Z - Downtown Core",
+        zone_lettre: "Z",
+        statut: "Completion 2026"
+    },
+    {
+        name: "voco Montréal (Palais des Congrès)",
+        type: "Hotel",
+        year: 2026,
+        city: "Montreal",
+        lat: 45.503,
+        lng: -73.562,
+        height: 45,
+        floors: 12,
+        usage: "Hotel",
+        zone: "Z - Old Montreal / Downtown",
+        zone_lettre: "Z",
+        statut: "New Build 2026"
+    },
+    {
+        name: "Casino de Montréal Hotel (Germain)",
+        type: "Luxury Hotel",
+        year: 2026,
+        city: "Montreal",
+        lat: 45.505,
+        lng: -73.525,
+        height: 60,
+        floors: 15,
+        usage: "Hotel",
+        zone: "Z - Parc Jean-Drapeau",
+        zone_lettre: "Z",
+        statut: "Target 2026"
+    },
+    {
+        name: "Royalmount Hospitality Hub",
+        type: "Hotel",
+        year: 2026,
+        city: "Montreal",
+        lat: 45.495,
+        lng: -73.655,
+        height: 70,
+        floors: 18,
+        usage: "Hotel",
+        zone: "Z - Royalmount / TMR",
+        zone_lettre: "Z",
+        statut: "Target 2026"
+    },
+    {
+        name: "40NetZero Montréal-Est",
+        type: "Industrial Campus",
+        year: 2026,
+        city: "Montreal",
+        lat: 45.63,
+        lng: -73.50,
+        height: 15,
+        floors: 2,
+        usage: "Industrial",
+        zone: "Z - Montréal-Est Industrial",
+        zone_lettre: "Z",
+        statut: "Carbon-Neutral Site 2026"
+    },
+    {
+        name: "Carré Laval Flagship",
+        type: "Mixed-use",
+        year: 2026,
+        city: "Laval",
+        lat: 45.56,
+        lng: -73.74,
+        height: 50,
+        floors: 15,
+        usage: "Mixed-use",
+        zone: "Laval - Centre-ville",
+        zone_lettre: "L",
+        statut: "Active Site 2026"
+    },
+    {
+        name: "Carrefour Laval Residential Towers",
+        type: "Residential Rental",
+        year: 2026,
+        city: "Laval",
+        lat: 45.56,
+        lng: -73.75,
+        height: 65,
+        floors: 20,
+        usage: "Residential",
+        zone: "Laval - Chomedey",
+        zone_lettre: "L",
+        statut: "Phase 1 - 2026/2027"
+    },
+    {
+        name: "Habitation Palerme (Social Housing)",
+        type: "Residential",
+        year: 2026,
+        city: "Laval",
+        lat: 45.55,
+        lng: -73.72,
+        height: 25,
+        floors: 6,
+        usage: "Social Housing",
+        zone: "Laval - Sud",
+        zone_lettre: "L",
+        statut: "Delivery 2026"
+    },
+    {
+        name: "Rosefellow Boisbriand Industrial",
+        type: "Industrial",
+        year: 2026,
+        city: "North Shore",
+        lat: 45.61,
+        lng: -73.83,
+        height: 15,
+        floors: 1,
+        usage: "Industrial",
+        zone: "Rive-Nord",
+        zone_lettre: "RN",
+        statut: "Completion 2026"
+    }
 ];
 
-async function addBuildings() {
-  console.log("Injecting new Laval and South Shore buildings...");
-  const { data, error } = await supabase.from('buildings').upsert(newBuildings, { onConflict: 'id' });
-  if (error) {
-    console.error("Error inserting buildings:", error);
-  } else {
-    console.log("Successfully injected 5 new buildings from Laval and South Shore!");
-  }
-}
+let nextId = Math.max(...data.inventory.map(b => b.id)) + 1;
 
-addBuildings();
+newBuildings.forEach(b => {
+    const exists = data.inventory.some(existing => existing.immeuble.toLowerCase().includes(b.name.toLowerCase().split('(')[0].trim()));
+    if (!exists) {
+        console.log(`✅ Adding building: ${b.name}`);
+        data.inventory.push({
+            id: nextId++,
+            rang: 99,
+            immeuble: b.name,
+            hauteur_m: b.height,
+            etages: b.floors,
+            annee: b.year,
+            usage: b.usage,
+            latitude: b.lat,
+            longitude: b.lng,
+            zone: b.zone,
+            zone_lettre: b.zone_lettre,
+            age_2026: 0,
+            score_total: 8,
+            priorite: "Élevée",
+            statut_public: b.statut,
+            decideur_probable: "Promoteur / Direction Technique",
+            angle_commercial: "Validation système alarme incendie - Nouveau projet",
+            raison_priorisation: "Livraison 2026 - Opportunité immédiate",
+            mode_action: "Prise de contact directe",
+            segment: b.usage.includes("Residential") ? "Syndicat / condo" : "Commercial / institutionnel",
+            top25_ordre: null,
+            condo_ordre: null,
+            image_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(b.name)}&background=random&size=200`,
+            contact_info: "Veille 2026 - Bureau de vente"
+        });
+    } else {
+        console.log(`⏭️ Skipping duplicate: ${b.name}`);
+    }
+});
+
+data.meta.total_tours = data.inventory.length;
+data.meta.top_prioritaires = data.inventory.filter(b => b.priorite === "Très élevée" || b.priorite === "Élevée").length;
+data.meta.date_generation = new Date().toISOString().split('T')[0];
+
+fs.writeFileSync(dataPath, JSON.stringify(data, null, 2), 'utf-8');
+console.log(`✨ Done. New total: ${data.meta.total_tours}`);

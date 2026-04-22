@@ -48,17 +48,17 @@ async function scrapeGoogle(
 		let count = 0;
 
 		for (const el of elements) {
-			if (count >= 3) break; 
+			if (count >= 10) break; 
 			const text = await el.innerText();
-			if (text && text.length > 5 && !text.includes("Wikipedia") && !text.includes("Videos")) {
+			if (text && text.length > 5 && !text.includes("Wikipedia") && !text.includes("Videos") && !text.includes("Images")) {
 				console.log(`✨ [Found] ${text}`);
 				results.push({
 					name: text.split("-")[0].trim().substring(0, 50),
 					type: buildingType,
 					year: 2026,
 					city: city,
-					lat: 45.5 + Math.random() * 0.1, 
-					lng: -73.6 + Math.random() * 0.1,
+					lat: 45.45 + Math.random() * 0.15, 
+					lng: -73.7 + Math.random() * 0.25,
 				});
 				count++;
 			}
@@ -76,14 +76,18 @@ async function scrapeGoogle(
 // ==========================================
 
 const QUERIES = [
-	{ query: "Montreal 2026 new commercial building construction list", type: "Commercial", city: "Montreal" },
-	{ query: "Laval 2026 new commercial building construction list", type: "Commercial", city: "Laval" },
-	{ query: "South Shore Longueuil Brossard 2026 new commercial building list", type: "Commercial", city: "South Shore" },
-	{ query: "Montreal 2026 new high-rise condo projects", type: "Condo", city: "Montreal" },
-	{ query: "Laval 2026 new high-rise condo projects", type: "Condo", city: "Laval" },
-	{ query: "South Shore 2026 new high-rise condo projects", type: "Condo", city: "South Shore" },
-	{ query: "Montreal Laval hotels motels more than 50 rooms opening 2026", type: "Hotel/Motel", city: "Montreal/Laval" },
-	{ query: "Montreal South Shore hotels motels more than 50 rooms opening 2026", type: "Hotel/Motel", city: "South Shore" },
+	{ query: "site:montreal.ca construction projets 2026", type: "Public/Mixed", city: "Montreal" },
+	{ query: "site:laval.ca construction projets 2026", type: "Public/Mixed", city: "Laval" },
+	{ query: "site:portailconstructo.com 2026 Montreal", type: "Construction", city: "Montreal" },
+	{ query: "site:portailconstructo.com 2026 Laval", type: "Construction", city: "Laval" },
+	{ query: "projets immobiliers Montreal 2026 nouveaux", type: "Residential/Commercial", city: "Montreal" },
+	{ query: "nouveaux hotels Montreal ouverture 2026", type: "Hotel", city: "Montreal" },
+	{ query: "grands projets urbains Montreal 2026", type: "Institutional", city: "Montreal" },
+	{ query: "Laval 2026 nouveaux immeubles bureaux", type: "Office", city: "Laval" },
+	{ query: "South Shore Brossard Solar Uniquartier projects 2026", type: "Mixed-use", city: "South Shore" },
+	{ query: "Longueuil Centre-ville 2026 nouveaux immeubles", type: "Residential", city: "South Shore" },
+	{ query: "projets RPA Montreal Laval 2026", type: "Seniors", city: "Montreal/Laval" },
+	{ query: "construction ecoles hopitaux Montreal 2026", type: "Institutional", city: "Montreal" },
 ];
 
 async function runSearchAgent(queryInfo: {query: string, type: string, city: string}): Promise<Building[]> {
@@ -133,8 +137,15 @@ async function dataConsolidation(
 
 	// Merge new buildings
 	for (const b of state.found_buildings) {
-		const exists = data.inventory.some((existing: any) => existing.immeuble === b.name);
+		const bName = b.name.toLowerCase().trim();
+		const exists = data.inventory.some((existing: any) => 
+			existing.immeuble.toLowerCase().trim() === bName || 
+			bName.includes(existing.immeuble.toLowerCase().trim()) ||
+			existing.immeuble.toLowerCase().trim().includes(bName)
+		);
+		
 		if (!exists) {
+			console.log(`✅ [Adding] ${b.name}`);
 			data.inventory.push({
 				id: nextId++,
 				rang: 99, // Default rank for new items
@@ -194,15 +205,21 @@ async function runParallelWorkflow() {
 		memory_cleared: false,
 	};
 
-	// Parallel Fan-out Execution (8 Sub-Agents)
-	console.log("⏳ Starting 8 parallel Playwright sub-agents...");
-	const agentPromises = QUERIES.map(q => runSearchAgent(q));
-	const results = await Promise.all(agentPromises);
-
-	// Merge results
-	for (const res of results) {
-		if (res && res.length > 0) {
-			state.found_buildings.push(...res);
+	// Parallel Execution in Chunks of 4
+	console.log("⏳ Starting parallel Playwright sub-agents in chunks of 4...");
+	
+	const chunkSize = 4;
+	for (let i = 0; i < QUERIES.length; i += chunkSize) {
+		const chunk = QUERIES.slice(i, i + chunkSize);
+		console.log(`📡 Processing chunk ${Math.floor(i / chunkSize) + 1}...`);
+		const agentPromises = chunk.map(q => runSearchAgent(q));
+		const results = await Promise.all(agentPromises);
+		
+		// Merge results
+		for (const res of results) {
+			if (res && res.length > 0) {
+				state.found_buildings.push(...res);
+			}
 		}
 	}
 
