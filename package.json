@@ -17,5 +17,18 @@
     "playwright": "^1.59.1",
     "sqlite3": "^6.0.1",
     "ws": "^8.20.0"
-  }
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fvegiard/alarm-incendie-prospection.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fvegiard/alarm-incendie-prospection/issues"
+  },
+  "homepage": "https://github.com/fvegiard/alarm-incendie-prospection#readme"
 }

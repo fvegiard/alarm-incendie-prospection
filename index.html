@@ -49,6 +49,7 @@
 	width: 1600px;
 	height: 1600px;
 	-webkit-transform-origin: 0 0;
+	transform-origin: 0 0;
 	}
 .leaflet-marker-icon,
 .leaflet-marker-shadow {
@@ -113,6 +114,7 @@
 /* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
 .leaflet-overlay-pane svg {
 	-moz-user-select: none;
+	user-select: none;
 	}
 
 .leaflet-pane         { z-index: 400; }
@@ -528,6 +530,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 	   -moz-transform: rotate(45deg);
 	    -ms-transform: rotate(45deg);
 	        transform: rotate(45deg);
+	user-select: none;
 	}
 .leaflet-popup-content-wrapper,
 .leaflet-popup-tip {
@@ -558,6 +561,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 .leaflet-oldie .leaflet-popup-content-wrapper {
 	-ms-zoom: 1;
+	zoom: 1;
 	}
 .leaflet-oldie .leaflet-popup-tip {
 	width: 24px;
@@ -1354,14 +1358,18 @@ let DATA = null;
         scrollWheelZoom: true,
         preferCanvas: true
       });
-      mapState.tileLayer = window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      mapState.tileLayer = window.L.tileLayer("https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png", {
+        maxZoom: 20,
+        attribution: '&copy; OpenStreetMap France | &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      });
+      mapState.tileLayer.on("tileerror", () => {
+        showFallbackMap("La carte OpenStreetMap France (RTE) n’a pas pu être chargée. Passage en vue schématique.");
       });
       mapState.tileLayer.addTo(map);
       mapState.instance = map;
       mapState.layer = window.L.layerGroup().addTo(map);
       return true;
+
     }
 
     function renderSchematicMap(filtered){
@@ -1538,16 +1546,18 @@ let DATA = null;
       return hay.includes(term.toLowerCase());
     }
 
-    function sortRecords(records, key){
+     function sortRecords(records, key){
       const arr = [...records];
       arr.sort((a,b) => {
-        if(key === "rang") return a.rang - b.rang;
-        if(key === "score_desc") return (b.score_total - a.score_total) || (priorityOrder[b.priorite]-priorityOrder[a.priorite]) || (a.rang-b.rang);
-        if(key === "hauteur_desc") return (b.hauteur_m - a.hauteur_m) || (a.rang-b.rang);
-        if(key === "annee_asc") return (a.annee - b.annee) || (a.rang-b.rang);
-        if(key === "annee_desc") return (b.annee - a.annee) || (a.rang-b.rang);
+        const ra = a.rang || 9999;
+        const rb = b.rang || 9999;
+        if(key === "rang") return ra - rb || (b.hauteur_m - a.hauteur_m);
+        if(key === "score_desc") return (b.score_total - a.score_total) || (priorityOrder[b.priorite]-priorityOrder[a.priorite]) || (ra - rb);
+        if(key === "hauteur_desc") return (b.hauteur_m - a.hauteur_m) || (ra - rb);
+        if(key === "annee_asc") return (a.annee - b.annee) || (ra - rb);
+        if(key === "annee_desc") return (b.annee - a.annee) || (ra - rb);
         if(key === "alpha") return a.immeuble.localeCompare(b.immeuble, "fr-CA");
-        return a.rang - b.rang;
+        return ra - rb;
       });
       return arr;
     }
@@ -1963,7 +1973,8 @@ let DATA = null;
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `prospection_montreal_filtre_2026-03-16.csv`;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `prospection_montreal_filtre_${dateStr}.csv`;
       mount.innerHTML = `
         <div class="detail">
           <div class="detail-card">
