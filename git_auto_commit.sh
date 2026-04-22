@@ -20,7 +20,7 @@ else
     
     # Push
     echo "📤 Pushing to GitHub..."
-    git push origin main
+    git push origin master
     
     if [ $? -eq 0 ]; then
         echo "🎉 Successfully pushed. Netlify deployment triggered."
