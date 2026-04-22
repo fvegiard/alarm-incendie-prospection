@@ -79,15 +79,15 @@ const QUERIES = [
 	{ query: "site:montreal.ca construction projets 2026", type: "Public/Mixed", city: "Montreal" },
 	{ query: "site:laval.ca construction projets 2026", type: "Public/Mixed", city: "Laval" },
 	{ query: "site:portailconstructo.com 2026 Montreal", type: "Construction", city: "Montreal" },
-	{ query: "site:portailconstructo.com 2026 Laval", type: "Construction", city: "Laval" },
+	{ query: "projets locatifs 2026 Rive-Nord Terrebonne", type: "Rental", city: "North Shore" },
 	{ query: "projets immobiliers Montreal 2026 nouveaux", type: "Residential/Commercial", city: "Montreal" },
 	{ query: "nouveaux hotels Montreal ouverture 2026", type: "Hotel", city: "Montreal" },
-	{ query: "grands projets urbains Montreal 2026", type: "Institutional", city: "Montreal" },
+	{ query: "nouveaux parcs industriels 2026 Montreal Laval Rive-Nord", type: "Industrial", city: "Montreal/Laval/North Shore" },
 	{ query: "Laval 2026 nouveaux immeubles bureaux", type: "Office", city: "Laval" },
-	{ query: "South Shore Brossard Solar Uniquartier projects 2026", type: "Mixed-use", city: "South Shore" },
+	{ query: "projets industriels 2026 Rive-Sud Longueuil", type: "Industrial", city: "South Shore" },
 	{ query: "Longueuil Centre-ville 2026 nouveaux immeubles", type: "Residential", city: "South Shore" },
-	{ query: "projets RPA Montreal Laval 2026", type: "Seniors", city: "Montreal/Laval" },
-	{ query: "construction ecoles hopitaux Montreal 2026", type: "Institutional", city: "Montreal" },
+	{ query: "maintenance inspection alarme incendie grands immeubles existants Montreal 2026", type: "Existing/Maintenance", city: "Montreal" },
+	{ query: "inspection obligatoire système incendie ULC-S536 tours habitation", type: "Existing/Maintenance", city: "Montreal/Laval/South/North Shore" },
 ];
 
 async function runSearchAgent(queryInfo: {query: string, type: string, city: string}): Promise<Building[]> {
@@ -208,7 +208,7 @@ async function runParallelWorkflow() {
 	// Parallel Execution in Chunks of 4
 	console.log("⏳ Starting parallel Playwright sub-agents in chunks of 4...");
 	
-	const chunkSize = 4;
+	const chunkSize = 1;
 	for (let i = 0; i < QUERIES.length; i += chunkSize) {
 		const chunk = QUERIES.slice(i, i + chunkSize);
 		console.log(`📡 Processing chunk ${Math.floor(i / chunkSize) + 1}...`);
