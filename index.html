@@ -794,10 +794,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     }
     .bar-track { height: 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.05); overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 999px; }
-    @media (max-width: 1200px) {
-      .hero, .dashboard-grid, .detail { grid-template-columns: 1fr; }
-      .kpis { grid-template-columns: repeat(2, 1fr); }
-    }
+
     .leaflet-control-attribution a{color:#9fd0ff!important}
     .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
     .legend-item{display:flex;gap:8px;align-items:center;color:#dce6fb;font-size:.9rem}
@@ -1357,16 +1354,9 @@ let DATA = null;
         scrollWheelZoom: true,
         preferCanvas: true
       });
-      mapState.tileLayer = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      mapState.tileLayer = window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap'
-      });
-      mapState.tileLayer.on("tileerror", () => {
-        if(mapState.offlineFallback) return;
-        mapState.offlineFallback = true;
-        mapState.fallbackReason = "La carte web n’a pas pu charger les tuiles OpenStreetMap. La vue schématique locale intégrée reste disponible dans ce fichier HTML.";
-        showFallbackMap(mapState.fallbackReason);
-        renderSchematicMap(mapState.currentFiltered);
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
       });
       mapState.tileLayer.addTo(map);
       mapState.instance = map;
@@ -2044,59 +2034,6 @@ let DATA = null;
       `;
     }
 
-    function renderInventoryTable(filtered){
-      const tbody = $("#inventoryTable tbody");
-      if(!filtered.length){
-        tbody.innerHTML = `<tr><td colspan="8"><div class="empty">Aucun immeuble ne correspond aux filtres.</div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = filtered.map(record => `
-        <tr data-id="${record.id}" class="${record.id === state.selectedId ? "selected" : ""}">
-          <td>${record.rang}</td>
-          <td>
-            <div><strong>${escapeHtml(record.immeuble)}</strong></div>
-            <div class="small muted">${record.top25_ordre ? `Top 25 #${record.top25_ordre}` : (record.condo_ordre ? `Condos #${record.condo_ordre}` : record.mode_action)}</div>
-          </td>
-          <td>${fmtHeight(record.hauteur_m)}</td>
-          <td>${record.annee}</td>
-          <td>${escapeHtml(getUsageLabel(record.usage))}</td>
-          <td>${escapeHtml(record.zone_lettre)}</td>
-          <td>${badge(record.priorite, toneForPriority(record.priorite))}</td>
-          <td>${badge(record.statut_public, toneForStatus(record.statut_public))}</td>
-        </tr>
-      `).join("");
-      tbody.querySelectorAll("tr[data-id]").forEach(row => row.addEventListener("click", () => {
-        state.selectedId = Number(row.dataset.id);
-        update(false);
-      }));
-    }
-
-    function renderZoneCards(){
-      const mount = $("#zoneCards");
-      const zones = [...DATA.zones].sort((a,b) => (b.pipeline_score - a.pipeline_score) || (b.nb_tours - a.nb_tours));
-      mount.innerHTML = zones.map(zone => `
-        <div class="zone-card ${zone.recommandee ? "recommended" : ""}" data-zone="${escapeHtml(zone.zone)}">
-          <h3>${escapeHtml(zone.zone)}</h3>
-          <div class="muted">${zone.recommandee ? "Zone recommandée pour la première vague" : "Zone secondaire / ciblée"}</div>
-          <div class="zone-mini">
-            <span>${zone.nb_tours} tours</span>
-            <span>${zone.tres_elevee + zone.elevee} top priorités</span>
-            <span>Score ${zone.pipeline_score}</span>
-          </div>
-          <div class="small" style="line-height:1.55"><strong>Top 5:</strong> ${escapeHtml(zone.top5_zone)}</div>
-          <div class="small muted" style="margin-top:10px;line-height:1.55">${escapeHtml(zone.strategie_terrain)}</div>
-        </div>
-      `).join("");
-      mount.querySelectorAll(".zone-card").forEach(card => {
-        card.addEventListener("click", () => {
-          state.zone = card.dataset.zone;
-          state.preset = "all";
-          state.cohort = "all";
-          update();
-        });
-      });
-    }
-
     function renderTopTables(){
       const topBody = $("#top25Table tbody");
       topBody.innerHTML = DATA.top25.map(row => `
@@ -2200,39 +2137,15 @@ let DATA = null;
       update();
     }
 
-    const SUPABASE_URL = "https://sojvecqkrhatnvspwaub.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvanZlY3FrcmhhdG52c3B3YXViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTgzNzgsImV4cCI6MjA5MjM3NDM3OH0.YCFulfPMTQm0weHisalk64Eaolaxd0hOWL7FZLt9ATY";
-    
-    Promise.all([
-      fetch('data.json').then(r => r.json()).catch(() => ({})),
-      fetch(`${SUPABASE_URL}/rest/v1/buildings?select=*`, {
-        headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-        }
-      }).then(r => {
-        if(!r.ok) throw new Error("Supabase fetch failed");
-        return r.json();
+    fetch('data.json')
+      .then(r => r.json())
+      .then(d => { 
+        DATA = d; 
+        init(); 
       })
-    ]).then(([localData, buildings]) => {
-      DATA = {
-        ...localData,
-        inventory: buildings,
-        meta: {
-          total_tours: buildings.length,
-          top_prioritaires: buildings.filter(b => b.priorite === 'Très élevée' || b.priorite === 'Élevée').length,
-          audit_ou_validation: buildings.filter(b => b.mode_action && b.mode_action.includes('Audit')).length,
-          commercial_institutionnel: buildings.filter(b => b.segment === 'Commercial / institutionnel').length,
-          condos_syndicats: buildings.filter(b => b.segment === 'Syndicat / condo').length,
-          date_generation: new Date().toISOString().split('T')[0],
-          version_label: "Supabase Live Data"
-        }
-      };
-      init();
-    }).catch(e => {
-      console.error("Supabase fetch failed, falling back to data.json", e);
-      fetch('data.json').then(r => r.json()).then(d => { DATA = d; init(); });
-    });
+      .catch(e => {
+        console.error("Failed to load local data.json", e);
+      });
   </script>
 </body>
 </html>
