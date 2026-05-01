@@ -819,6 +819,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
       background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:16px;padding:16px
     }
     .detail-card h3{margin:0 0 8px;font-size:1.15rem}
+    .building-photo{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:10px;margin:0 0 14px 0;border:1px solid var(--line);background:rgba(255,255,255,0.03)}
+    .building-photo[data-fallback="1"]{object-fit:contain;background:#0D6EFD;padding:12px}
+    .meta-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:.92rem}
+    .meta-row:first-of-type{border-top:none}
+    .meta-row .k{color:var(--muted);flex-shrink:0}
+    .meta-row .v{text-align:right;word-break:break-word}
+    .meta-row .v a{color:var(--accent,#7ab8ff)}
     .detail-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
     .badges{display:flex;flex-wrap:wrap;gap:8px}
     .badge{
@@ -1783,6 +1790,7 @@ let DATA = null;
       mount.innerHTML = `
         <div class="detail">
           <div class="detail-card">
+            ${record.image_url ? `<img class="building-photo" src="${escapeHtml(record.image_url)}" alt="${escapeHtml(record.immeuble)}" loading="lazy" onerror="this.onerror=null;this.setAttribute('data-fallback','1');this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(${JSON.stringify(record.immeuble)})+'&size=640&background=0D6EFD&color=fff&bold=true';" />` : ''}
             <div class="detail-top">
               <div>
                 <h3>${escapeHtml(record.immeuble)}</h3>
@@ -1813,6 +1821,10 @@ let DATA = null;
           </div>
           <div class="detail-card">
             <h3>Contact admin / gestion</h3>
+            ${record.contact_info ? `<div class="meta-row"><div class="k">Info contact</div><div class="v">${escapeHtml(record.contact_info)}</div></div>` : ''}
+            ${record.owner ? `<div class="meta-row"><div class="k">Propriétaire</div><div class="v">${escapeHtml(record.owner)}</div></div>` : ''}
+            ${record.management_company ? `<div class="meta-row"><div class="k">Gestionnaire</div><div class="v">${escapeHtml(record.management_company)}</div></div>` : ''}
+            ${record.website ? `<div class="meta-row"><div class="k">Site web</div><div class="v"><a href="${escapeHtml(record.website)}" target="_blank" rel="noreferrer">${escapeHtml(record.website)}</a></div></div>` : ''}
             <div class="facts contact-grid">
               <div class="fact"><div class="k">Canal prioritaire</div><div class="v">${escapeHtml(getContactChannel(record))}</div></div>
               <div class="fact"><div class="k">Coordonnées à récupérer</div><div class="v">${escapeHtml(getContactChecklist(record))}</div></div>
@@ -1978,6 +1990,7 @@ let DATA = null;
       mount.innerHTML = `
         <div class="detail">
           <div class="detail-card">
+            ${record.image_url ? `<img class="building-photo" src="${escapeHtml(record.image_url)}" alt="${escapeHtml(record.immeuble)}" loading="lazy" onerror="this.onerror=null;this.setAttribute('data-fallback','1');this.src='https://ui-avatars.com/api/?name='+encodeURIComponent(${JSON.stringify(record.immeuble)})+'&size=640&background=0D6EFD&color=fff&bold=true';" />` : ''}
             <div class="detail-top">
               <div>
                 <h3>${escapeHtml(record.immeuble)}</h3>
@@ -2008,6 +2021,10 @@ let DATA = null;
           </div>
           <div class="detail-card">
             <h3>Contact admin / gestion</h3>
+            ${record.contact_info ? `<div class="meta-row"><div class="k">Info contact</div><div class="v">${escapeHtml(record.contact_info)}</div></div>` : ''}
+            ${record.owner ? `<div class="meta-row"><div class="k">Propriétaire</div><div class="v">${escapeHtml(record.owner)}</div></div>` : ''}
+            ${record.management_company ? `<div class="meta-row"><div class="k">Gestionnaire</div><div class="v">${escapeHtml(record.management_company)}</div></div>` : ''}
+            ${record.website ? `<div class="meta-row"><div class="k">Site web</div><div class="v"><a href="${escapeHtml(record.website)}" target="_blank" rel="noreferrer">${escapeHtml(record.website)}</a></div></div>` : ''}
             <div class="facts contact-grid">
               <div class="fact"><div class="k">Canal prioritaire</div><div class="v">${escapeHtml(getContactChannel(record))}</div></div>
               <div class="fact"><div class="k">Coordonnées à récupérer</div><div class="v">${escapeHtml(getContactChecklist(record))}</div></div>

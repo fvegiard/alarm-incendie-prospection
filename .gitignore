@@ -5,3 +5,7 @@ node_modules/
 
 # Local Netlify folder
 .netlify
+# Generated artifacts
+__pycache__/
+*.log
+*.bak
