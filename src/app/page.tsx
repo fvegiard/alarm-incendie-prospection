@@ -1,209 +1,216 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  buildings,
-  cityStats,
-  getAddress,
-  getImageUrl,
-  getStreetViewUrl,
-  priorityStyles,
-  recentBuildings,
-} from "@/lib/data";
-import StatsPanel from "@/components/StatsPanel";
-import { Building2, MapPin, Search, ArrowRight, Flame, TrendingUp } from "lucide-react";
-import Image from "next/image";
+import Link from "next/link";
+import { buildings, getCity } from "@/lib/data";
+import { Search, Building2, MapPin, AlertTriangle, Users, ArrowRight } from "lucide-react";
 
-export default function Home() {
-  const router = useRouter();
-  const [search, setSearch] = useState("");
-  const recent = recentBuildings(8);
-  const cities = cityStats();
+export default function Dashboard() {
+  const [query, setQuery] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) {
-      router.push(`/buildings?q=${encodeURIComponent(search.trim())}`);
-    }
-  };
+  // Hardcoded stats (as specified)
+  const total = 522;
+
+  const cityBreakdown = [
+    { name: "Montréal", count: 217 },
+    { name: "Longueuil", count: 168 },
+    { name: "Laval", count: 124 },
+    { name: "Brossard", count: 13 },
+  ];
+
+  const priorityBreakdown = [
+    { name: "Très élevée", count: 5, color: "text-rose-400" },
+    { name: "Élevée", count: 32, color: "text-orange-400" },
+    { name: "Moyenne", count: 143, color: "text-amber-400" },
+    { name: "Faible", count: 342, color: "text-emerald-400" },
+  ];
+
+  const segmentBreakdown = [
+    { name: "Commercial / institutionnel", count: 279 },
+    { name: "Syndicat / condo", count: 243 },
+  ];
+
+  // Recent buildings (from data, filtered by search)
+  const baseRecent = [...buildings].slice(0, 8);
+  const filteredRecent = query
+    ? baseRecent.filter(
+        (b) =>
+          b.immeuble.toLowerCase().includes(query.toLowerCase()) ||
+          b.zone.toLowerCase().includes(query.toLowerCase()) ||
+          getCity(b.zone).toLowerCase().includes(query.toLowerCase())
+      )
+    : baseRecent;
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-[1200px] mx-auto space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="flex items-end justify-between">
         <div>
-          <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 dark:bg-rose-950 dark:text-rose-300">
-            <Flame className="h-3.5 w-3.5" />
-            Campagne de prospection 2026
+          <div className="inline-flex items-center gap-2 rounded-full bg-rose-950 px-3 py-1 text-xs font-medium text-rose-400 ring-1 ring-rose-900/50">
+            CAMPAGNE 2026
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl">
-            Tableau de bord
-          </h1>
-          <p className="mt-1 text-zinc-500 dark:text-zinc-400">
-            Suivez les immeubles prioritaires pour les alarmes incendie dans la grande région de Montréal.
+          <h1 className="mt-2 text-4xl font-semibold tracking-tighter">Dashboard</h1>
+          <p className="mt-1 text-zinc-400">
+            Prospection alarmes incendie — région de Montréal
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            href="/buildings"
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
-          >
-            <Building2 className="h-4 w-4" />
-            Voir les immeubles
-          </Link>
-          <Link
-            href="/map"
-            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-zinc-900 ring-1 ring-zinc-200 transition-colors hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800"
-          >
-            <MapPin className="h-4 w-4" />
-            Carte
-          </Link>
-        </div>
-      </div>
-
-      {/* Search */}
-      <form onSubmit={handleSearch} className="relative max-w-2xl">
-        <div className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
-          <Search className="h-5 w-5" />
-        </div>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Rechercher un immeuble, une adresse, une zone..."
-          className="w-full rounded-2xl border-0 bg-white py-4 pl-12 pr-32 text-base text-zinc-900 shadow-sm ring-1 ring-zinc-200 outline-none transition-all placeholder:text-zinc-500 focus:ring-2 focus:ring-rose-500 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800"
-        />
-        <button
-          type="submit"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-rose-700"
+        <Link
+          href="/buildings"
+          className="hidden md:inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
         >
-          Rechercher
-        </button>
-      </form>
+          View all buildings
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
 
-      {/* Stats */}
-      <section>
-        <div className="mb-4 flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-zinc-400" />
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Vue d'ensemble
-          </h2>
-        </div>
-        <StatsPanel />
-      </section>
-
-      {/* Cities */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-zinc-400" />
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Territoires
-            </h2>
+      {/* 4 Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 1. Total */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex items-center gap-2 text-sm text-zinc-400">
+            <Building2 className="h-4 w-4" />
+            TOTAL BUILDINGS
           </div>
-          <Link
-            href="/map"
-            className="inline-flex items-center gap-1 text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
-            Voir sur la carte
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {cities.map((c) => (
-            <Link
-              key={c.city}
-              href={`/buildings?city=${encodeURIComponent(c.city)}`}
-              className="group relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-zinc-200 transition-all hover:-translate-y-0.5 hover:shadow-lg dark:bg-zinc-900 dark:ring-zinc-800"
-            >
-              <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${c.color} text-white shadow-sm`}>
-                <MapPin className="h-5 w-5" />
-              </div>
-              <div className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
-                {c.count}
-              </div>
-              <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                {c.city}
-              </div>
-              <ArrowRight className="absolute right-4 top-4 h-4 w-4 text-zinc-300 opacity-0 transition-all group-hover:text-zinc-600 group-hover:opacity-100 dark:text-zinc-700 dark:group-hover:text-zinc-300" />
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Recent buildings */}
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-zinc-400" />
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-              Immeubles récents
-            </h2>
+          <div className="mt-3 text-6xl font-semibold tracking-[-2.5px] text-white">
+            {total}
           </div>
+          <div className="mt-1 text-xs text-emerald-400">All territories • up to date</div>
+        </div>
+
+        {/* 2. City Breakdown */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex items-center gap-2 text-sm text-zinc-400 mb-4">
+            <MapPin className="h-4 w-4" />
+            CITY BREAKDOWN
+          </div>
+          <div className="space-y-2 text-sm">
+            {cityBreakdown.map((c) => (
+              <div key={c.name} className="flex items-center justify-between">
+                <span className="text-zinc-300">{c.name}</span>
+                <span className="font-mono text-base text-zinc-100 tabular-nums">{c.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-zinc-800 text-[10px] text-zinc-500">4 cities • 522 total</div>
+        </div>
+
+        {/* 3. Priority Breakdown */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex items-center gap-2 text-sm text-zinc-400 mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            PRIORITY BREAKDOWN
+          </div>
+          <div className="space-y-2 text-sm">
+            {priorityBreakdown.map((p) => (
+              <div key={p.name} className="flex items-center justify-between">
+                <span className={p.color}>{p.name}</span>
+                <span className="font-mono text-base text-zinc-100 tabular-nums">{p.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 pt-3 border-t border-zinc-800 text-[10px] text-zinc-500">37 high priority</div>
+        </div>
+
+        {/* 4. Segment Breakdown */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+          <div className="flex items-center gap-2 text-sm text-zinc-400 mb-4">
+            <Users className="h-4 w-4" />
+            SEGMENT BREAKDOWN
+          </div>
+          <div className="space-y-3 text-sm">
+            {segmentBreakdown.map((s) => (
+              <div key={s.name} className="flex items-center justify-between">
+                <span className="text-zinc-300">{s.name}</span>
+                <span className="font-semibold text-lg tabular-nums text-white">{s.count}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 pt-3 border-t border-zinc-800 flex justify-between text-[10px] text-zinc-500">
+            <span>Commercial</span>
+            <span>Condo/Syndic</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div>
+        <div className="relative max-w-xl">
+          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search buildings, zones or addresses..."
+            className="w-full rounded-2xl border border-zinc-800 bg-zinc-900 py-3 pl-11 pr-4 text-sm placeholder:text-zinc-500 focus:border-zinc-700 focus:outline-none"
+          />
+        </div>
+        {query && (
+          <div className="mt-1 text-xs text-zinc-500 pl-1">
+            Filtering recent buildings • {filteredRecent.length} matches
+          </div>
+        )}
+      </div>
+
+      {/* Recent Buildings Grid */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Recent Buildings</h2>
           <Link
             href="/buildings"
-            className="inline-flex items-center gap-1 text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="inline-flex items-center gap-1 text-sm text-zinc-400 hover:text-white"
           >
-            Tout voir
-            <ArrowRight className="h-4 w-4" />
+            Browse all <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {recent.map((building) => (
-            <RecentCard key={building.id} building={building} />
-          ))}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredRecent.length > 0 ? (
+            filteredRecent.map((building) => {
+              const city = getCity(building.zone);
+              return (
+                <Link
+                  key={building.id}
+                  href={`/buildings/${building.id}`}
+                  className="group rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition-all hover:border-zinc-700 hover:bg-zinc-800/50"
+                >
+                  <div className="flex items-center justify-between text-xs">
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 font-medium ${
+                        building.priorite.includes("Élevée") || building.priorite.includes("Très")
+                          ? "bg-orange-950 text-orange-400"
+                          : "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {building.priorite}
+                    </span>
+                    <span className="text-zinc-500">#{building.id}</span>
+                  </div>
+
+                  <div className="mt-3 text-[15px] font-medium leading-snug text-white group-hover:text-rose-300 line-clamp-2 transition-colors">
+                    {building.immeuble}
+                  </div>
+
+                  <div className="mt-2 text-xs text-zinc-400">
+                    {city} • {building.etages} étages • {building.annee}
+                  </div>
+
+                  <div className="mt-2 truncate text-[10px] text-zinc-500">
+                    {building.zone}
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <div className="col-span-full rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center text-sm text-zinc-500">
+              No buildings match your search.
+            </div>
+          )}
         </div>
-      </section>
+      </div>
+
+      <div className="pt-4 text-center text-[10px] text-zinc-600">
+        Data snapshot • 522 tours • DRÉlectrique 2026
+      </div>
     </div>
-  );
-}
-
-function RecentCard({ building }: { building: import("@/lib/data").Building }) {
-  const priorityStyle = priorityStyles[building.priorite];
-  const imageUrl = getImageUrl(building) || getStreetViewUrl(building, 600, 400);
-
-  return (
-    <Link
-      href={`/buildings/${building.id}`}
-      className="group flex gap-4 rounded-2xl bg-white p-3 ring-1 ring-zinc-200 transition-all hover:shadow-md dark:bg-zinc-900 dark:ring-zinc-800"
-    >
-      <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
-        <Image
-          src={imageUrl}
-          alt={building.immeuble}
-          fill
-          sizes="80px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-          unoptimized
-          onError={(e) => {
-            const target = e.currentTarget as HTMLImageElement;
-            target.style.display = "none";
-            target.parentElement?.classList.add(
-              "bg-gradient-to-br",
-              "from-zinc-200",
-              "to-zinc-300",
-              "dark:from-zinc-700",
-              "dark:to-zinc-800"
-            );
-          }}
-        />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center">
-        <span className={`mb-1.5 w-fit rounded-full px-2 py-0.5 text-[10px] font-semibold ${priorityStyle.badge}`}>
-          {building.priorite}
-        </span>
-        <h3 className="line-clamp-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          {building.immeuble}
-        </h3>
-        <p className="line-clamp-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {getAddress(building)}
-        </p>
-        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-          {building.etages} étages · {building.annee}
-        </p>
-      </div>
-    </Link>
   );
 }
