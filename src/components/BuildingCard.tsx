@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Building } from "@/lib/data";
+import { generateStreetViewUrl } from "@/lib/google-streetview";
 import { MapPin, Layers, Calendar, Flame, Tag } from "lucide-react";
 
 interface BuildingCardProps {
@@ -18,11 +19,16 @@ const priorityColors: Record<string, { bg: string; text: string; border: string 
 const defaultPriority = { bg: "bg-gray-100", text: "text-gray-700", border: "border-gray-200" };
 
 export default function BuildingCard({ building }: BuildingCardProps) {
-  const address = `${building.immeuble}, ${building.zone || "Montréal"}, QC`;
-  const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=600x400&location=${building.latitude},${building.longitude}&key=YOUR_KEY`;
-  const priority = building.priorite || "Faible";
+  const address = `${building.name}, ${building.zone || "Montréal"}, QC`;
+  let streetViewUrl: string;
+  try {
+    streetViewUrl = generateStreetViewUrl(building.latitude, building.longitude);
+  } catch {
+    streetViewUrl = `https://placehold.co/600x400?text=${encodeURIComponent(building.name)}`;
+  }
+  const priority = building.priority || "Faible";
   const colors = priorityColors[priority] || defaultPriority;
-  const fireStatus = building.statut_public || "Inconnu";
+  const fireStatus = building.fire_system_status || "Inconnu";
 
   return (
     <Link
@@ -33,11 +39,11 @@ export default function BuildingCard({ building }: BuildingCardProps) {
       <div className="relative h-40 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
         <img
           src={streetViewUrl}
-          alt={`Street view of ${building.immeuble}`}
+          alt={`Street view of ${building.name}`}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             const target = e.currentTarget as HTMLImageElement;
-            target.src = "https://via.placeholder.com/600x400?text=No+Image";
+            target.src = "https://placehold.co/600x400?text=No+Image";
           }}
         />
         
@@ -64,7 +70,7 @@ export default function BuildingCard({ building }: BuildingCardProps) {
       {/* Content */}
       <div className="p-4">
         <h3 className="mb-1 line-clamp-2 text-lg font-semibold text-zinc-900 group-hover:text-zinc-700 dark:text-zinc-100">
-          {building.immeuble}
+          {building.name}
         </h3>
         
         <div className="mb-3 flex items-center gap-1.5 text-sm text-zinc-500 dark:text-zinc-400">
@@ -76,13 +82,13 @@ export default function BuildingCard({ building }: BuildingCardProps) {
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-300">
             <Layers className="h-4 w-4 text-zinc-400" />
-            <span className="font-medium">{building.etages}</span>
+            <span className="font-medium">{building.floors}</span>
             <span className="text-xs text-zinc-500">floors</span>
           </div>
 
           <div className="flex items-center gap-1 text-zinc-600 dark:text-zinc-300">
             <Calendar className="h-4 w-4 text-zinc-400" />
-            <span className="font-medium">{building.annee}</span>
+            <span className="font-medium">{building.year_built}</span>
           </div>
 
           <div className="flex items-center gap-1.5">

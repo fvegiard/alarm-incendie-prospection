@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import { Search, X } from "lucide-react";
+import type { Building } from "@/lib/data";
 
 export interface FilterState {
   city: string;
@@ -40,73 +42,69 @@ export function parseFilters(searchParams: URLSearchParams): FilterState {
   };
 }
 
-export function applyFilters(buildings: any[], state: FilterState): any[] {
+export function applyFilters(buildings: Building[], state: FilterState): Building[] {
   let result = [...buildings];
 
   if (state.search.trim()) {
     const q = state.search.toLowerCase();
-    result = result.filter((b: any) =>
-      (b.immeuble || "").toLowerCase().includes(q) ||
-      (b.zone || "").toLowerCase().includes(q)
+    result = result.filter((b) =>
+      (b.name || "").toLowerCase().includes(q) ||
+      (b.zone || "").toLowerCase().includes(q) ||
+      (b.address || "").toLowerCase().includes(q)
     );
   }
 
   if (state.city) {
-    result = result.filter((b: any) => {
-      const city = (b.zone || "").includes("Longueuil") ? "Longueuil" :
-                   (b.zone || "").includes("Laval") ? "Laval" : "Montréal";
-      return city === state.city;
-    });
+    result = result.filter((b) => b.city === state.city);
   }
 
   if (state.segment) {
-    result = result.filter((b: any) => b.segment === state.segment);
+    result = result.filter((b) => b.segment === state.segment);
   }
 
   if (state.priority) {
-    result = result.filter((b: any) => b.priorite === state.priority);
+    result = result.filter((b) => b.priority === state.priority);
   }
 
   if (state.fireSystemStatus) {
-    result = result.filter((b: any) => (b.statut_public || "Inconnu") === state.fireSystemStatus);
+    result = result.filter((b) => (b.fire_system_status || "Inconnu") === state.fireSystemStatus);
   }
 
   // Simple sort
   if (state.sort === "name") {
-    result.sort((a: any, b: any) => (a.immeuble || "").localeCompare(b.immeuble || ""));
+    result.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
   } else if (state.sort === "year") {
-    result.sort((a: any, b: any) => (a.annee || 0) - (b.annee || 0));
+    result.sort((a, b) => (a.year_built || 0) - (b.year_built || 0));
   } else if (state.sort === "city") {
-    result.sort((a: any, b: any) => (a.zone || "").localeCompare(b.zone || ""));
+    result.sort((a, b) => (a.city || "").localeCompare(b.city || ""));
   } else {
     // priority default
     const pOrder: Record<string, number> = { "Très élevée": 1, "Élevée": 2, "Moyenne": 3, "Faible": 4 };
-    result.sort((a: any, b: any) => (pOrder[a.priorite] || 5) - (pOrder[b.priorite] || 5));
+    result.sort((a, b) => (pOrder[a.priority] || 5) - (pOrder[b.priority] || 5));
   }
 
   return result;
 }
 
-export function computeCounts(buildings: any[]): FilterBarProps["counts"] {
+export function computeCounts(buildings: Building[]): FilterBarProps["counts"] {
   const city: Record<string, number> = {};
   const segment: Record<string, number> = {};
   const priority: Record<string, number> = {};
   const fireSystemStatus: Record<string, number> = {};
 
-  buildings.forEach((b: any) => {
-    const c = (b.zone || "").includes("Longueuil") ? "Longueuil" :
-              (b.zone || "").includes("Laval") ? "Laval" : "Montréal";
+  buildings.forEach((b) => {
+    const c = b.city || "Montréal";
     city[c] = (city[c] || 0) + 1;
-    segment[b.segment] = (segment[b.segment] || 0) + 1;
-    priority[b.priorite] = (priority[b.priorite] || 0) + 1;
-    const fs = b.statut_public || "Inconnu";
+    if (b.segment) segment[b.segment] = (segment[b.segment] || 0) + 1;
+    if (b.priority) priority[b.priority] = (priority[b.priority] || 0) + 1;
+    const fs = b.fire_system_status || "Inconnu";
     fireSystemStatus[fs] = (fireSystemStatus[fs] || 0) + 1;
   });
 
   return { city, segment, priority, fireSystemStatus };
 }
 
-export default function FilterBar({ counts }: FilterBarProps) {
+function FilterBarInner({ counts }: FilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -223,5 +221,13 @@ export default function FilterBar({ counts }: FilterBarProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FilterBar({ counts }: FilterBarProps) {
+  return (
+    <Suspense fallback={<div className="h-16 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />}>
+      <FilterBarInner counts={counts} />
+    </Suspense>
   );
 }

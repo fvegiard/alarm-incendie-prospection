@@ -1,9 +1,11 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { buildings, getCity } from "@/lib/data";
 import BuildingCard from "@/components/BuildingCard";
-import FilterBar, {
+import FilterBar from "@/components/FilterBar";
+import {
   applyFilters,
   computeCounts,
   parseFilters,
@@ -13,6 +15,30 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const PAGE_SIZE = 20;
 
 export default function BuildingsPage() {
+  return (
+    <Suspense fallback={<BuildingsSkeleton />}>
+      <BuildingsInner />
+    </Suspense>
+  );
+}
+
+function BuildingsSkeleton() {
+  return (
+    <div className="min-h-screen bg-zinc-50 pb-12 dark:bg-zinc-950">
+      <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+        <div className="mb-6 h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+        <div className="mb-6 h-16 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-48 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuildingsInner() {
   const searchParams = useSearchParams();
   const filterState = parseFilters(searchParams);
   const counts = computeCounts(buildings);

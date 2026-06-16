@@ -35,7 +35,7 @@ export default function Dashboard() {
   const filteredRecent = query
     ? baseRecent.filter(
         (b) =>
-          b.immeuble.toLowerCase().includes(query.toLowerCase()) ||
+          ((b as any).name || (b as any).immeuble || "").toLowerCase().includes(query.toLowerCase()) ||
           b.zone.toLowerCase().includes(query.toLowerCase()) ||
           getCity(b.zone).toLowerCase().includes(query.toLowerCase())
       )
@@ -176,22 +176,22 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between text-xs">
                     <span
                       className={`inline-block rounded px-2 py-0.5 font-medium ${
-                        building.priorite.includes("Élevée") || building.priorite.includes("Très")
+                        (building as any).priorite || (building as any).priority.includes("Élevée") || (building as any).priorite || (building as any).priority.includes("Très")
                           ? "bg-orange-950 text-orange-400"
                           : "bg-zinc-800 text-zinc-400"
                       }`}
                     >
-                      {building.priorite}
+                      {(building as any).priorite || (building as any).priority}
                     </span>
                     <span className="text-zinc-500">#{building.id}</span>
                   </div>
 
                   <div className="mt-3 text-[15px] font-medium leading-snug text-white group-hover:text-rose-300 line-clamp-2 transition-colors">
-                    {building.immeuble}
+                    {(building as any).immeuble || (building as any).name}
                   </div>
 
                   <div className="mt-2 text-xs text-zinc-400">
-                    {city} • {building.etages} étages • {building.annee}
+                    {city} • {(building as any).etages || (building as any).floors} étages • {(building as any).annee || (building as any).year_built}
                   </div>
 
                   <div className="mt-2 truncate text-[10px] text-zinc-500">

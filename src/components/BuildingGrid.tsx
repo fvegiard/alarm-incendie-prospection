@@ -1,6 +1,6 @@
 'use client';
 
-import { Building } from '@/lib/types';
+import { Building } from '@/lib/data';
 import BuildingCard from './BuildingCard';
 
 interface Props {

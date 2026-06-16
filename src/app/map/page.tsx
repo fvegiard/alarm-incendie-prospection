@@ -8,9 +8,9 @@ import { ArrowLeft } from "lucide-react";
 export default function MapPage() {
   const mapBuildings = buildings.map((b) => ({
     id: b.id,
-    name: b.immeuble,
+    name: b.name,
     address: getAddress(b),
-    priority: b.priorite,
+    priority: b.priority,
     latitude: b.latitude,
     longitude: b.longitude,
   }));
