@@ -1,29 +1,43 @@
 {
-  "name": "alarm-refactor",
-  "version": "0.1.0",
+  "name": "alarm-incendie-prospection",
+  "version": "2.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint",
+    "db:migrate": "prisma migrate dev --name init",
+    "db:generate": "prisma generate",
+    "db:seed": "npx ts-node scripts/seed-buildings.ts",
+    "db:migrate-data": "npx ts-node scripts/migrate-data.ts",
+    "images:fetch": "npx ts-node scripts/fetch-images.ts",
+    "images:dry-run": "npx ts-node scripts/fetch-images.ts --dry-run"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.108.2",
-    "leaflet": "^1.9.4",
-    "lucide-react": "^1.20.0",
-    "next": "16.2.9",
-    "react": "19.2.4",
-    "react-dom": "19.2.4",
-    "react-leaflet": "^5.0.0"
+    "@prisma/client": "^6",
+    "@supabase/supabase-js": "^2",
+    "dotenv": "^16",
+    "leaflet": "^1",
+    "lucide-react": "^0",
+    "next": "^16",
+    "react": "^19",
+    "react-dom": "^19",
+    "react-leaflet": "^5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/leaflet": "^1.9.21",
-    "@types/node": "^20.19.43",
+    "@types/leaflet": "^1",
+    "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^16",
+    "postcss": "^8",
+    "prisma": "^6",
     "tailwindcss": "^4",
-    "tsx": "^4.22.4",
+    "ts-node": "^10",
     "typescript": "^5"
   }
 }

@@ -1,18 +1,11 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 /**
- * scripts/migrate-data.ts
+ * migrate-data.ts
  *
- * Phase 2 migration script for the alarm-refactor project.
- *
- * Reads data.json from the project root (legacy schema) and:
- *   1. Maps old fields to the new Supabase schema (buildings + building_images).
- *   2. Writes supabase/seed.sql with INSERT statements for 522 buildings and images.
- *   3. Supports --json to print the mapped JSON representation to stdout.
- *
- * Run with:
- *   npx tsx scripts/migrate-data.ts
- *   npx tsx scripts/migrate-data.ts --json
- *   npx tsx scripts/migrate-data.ts --data /path/to/data.json
+ * Phase 2 migration script.
+ * Reads the old data.json from the original repo and produces:
+ *   - a mapped JSON representation (--json)
+ *   - a Supabase seed SQL file (supabase/seed.sql) with buildings + placeholder images.
  */
 
 import fs from "node:fs";
@@ -35,6 +28,8 @@ interface OldBuilding {
   usage?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  lat?: number | null;
+  lng?: number | null;
   zone?: string | null;
   zone_lettre?: string | null;
   age_2026?: number | null;
@@ -58,8 +53,16 @@ interface OldBuilding {
   contact_info?: string | null;
   website?: string | null;
   owner?: string | null;
+  management?: string | null;
   management_company?: string | null;
-  coord?: [number, number] | null;
+}
+
+interface BuildingImage {
+  building_id: number;
+  image_url: string | null;
+  type: "local" | "remote" | "placeholder" | "unknown";
+  source: string | null;
+  is_primary: boolean;
 }
 
 interface MappedBuilding {
@@ -102,14 +105,6 @@ interface MappedBuilding {
   };
 }
 
-interface BuildingImage {
-  building_id: number;
-  image_url: string | null;
-  type: "local" | "remote" | "placeholder" | "unknown";
-  source: string | null;
-  is_primary: boolean;
-}
-
 function toNumber(value: unknown): number | null {
   if (value === null || value === undefined || value === "") return null;
   const n = Number(value);
@@ -122,75 +117,41 @@ function toString(value: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
-function inferCity(zone?: string | null): string | null {
-  // The original dataset covers Montreal; no city field exists in the legacy schema.
+function inferCity(zone?: string | null, ville?: string | null): string | null {
+  if (ville) return ville;
+  if (zone && zone.toLowerCase().includes("laval")) return "Laval";
   return "Montréal";
-}
-
-function deriveAddress(old: OldBuilding): string | null {
-  // Legacy data has no separate address; use explicit address if present,
-  // otherwise fall back to the building name (immeuble).
-  return toString(old.adresse) ?? toString(old.immeuble);
-}
-
-function deriveCoordinates(old: OldBuilding): { latitude: number | null; longitude: number | null } {
-  const lat = toNumber(old.latitude);
-  const lng = toNumber(old.longitude);
-  if (lat !== null && lng !== null) {
-    return { latitude: lat, longitude: lng };
-  }
-
-  // Fallback to legacy coord array [lat, lng] if present.
-  if (Array.isArray(old.coord) && old.coord.length >= 2) {
-    const fallbackLat = toNumber(old.coord[0]);
-    const fallbackLng = toNumber(old.coord[1]);
-    if (fallbackLat !== null && fallbackLng !== null) {
-      return { latitude: fallbackLat, longitude: fallbackLng };
-    }
-  }
-
-  return { latitude: lat, longitude: lng };
-}
-
-function deriveNotes(old: OldBuilding): string | null {
-  // website is mapped to notes per the task spec.
-  const websiteNote = toString(old.website);
-  return websiteNote;
 }
 
 function classifyImageUrl(imageUrl: string | null | undefined): Omit<BuildingImage, "building_id" | "is_primary"> {
   if (!imageUrl) {
-    return { image_url: null, type: "placeholder", source: "missing" };
+    return { image_url: null, type: "placeholder", source: null };
   }
-
   const lower = imageUrl.toLowerCase();
-
   if (lower.includes("ui-avatars.com")) {
     return { image_url: imageUrl, type: "placeholder", source: "ui-avatars" };
   }
-
   if (/^https?:\/\//.test(imageUrl)) {
     return { image_url: imageUrl, type: "remote", source: "external" };
   }
-
   if (/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(imageUrl)) {
     return { image_url: imageUrl, type: "local", source: "legacy_path" };
   }
-
   return { image_url: imageUrl, type: "unknown", source: "legacy_path" };
 }
 
 function mapBuilding(old: OldBuilding): MappedBuilding {
-  const coords = deriveCoordinates(old);
   const image = classifyImageUrl(old.image_url);
+  const lat = toNumber(old.lat ?? old.latitude);
+  const lng = toNumber(old.lng ?? old.longitude);
 
   return {
     id: old.id,
     name: toString(old.immeuble),
-    address: deriveAddress(old),
-    city: toString(old.ville) ?? inferCity(old.zone),
-    latitude: coords.latitude,
-    longitude: coords.longitude,
+    address: toString(old.adresse ?? old.immeuble),
+    city: inferCity(old.zone, old.ville),
+    latitude: lat,
+    longitude: lng,
     height_m: toNumber(old.hauteur_m),
     floors: toNumber(old.etages),
     year_built: toNumber(old.annee),
@@ -204,8 +165,8 @@ function mapBuilding(old: OldBuilding): MappedBuilding {
     score_total: toNumber(old.score_total),
     owner_name: toString(old.owner),
     owner_contact: toString(old.contact_info),
-    management_company: toString(old.management_company),
-    notes: deriveNotes(old),
+    management_company: toString(old.management ?? old.management_company),
+    notes: toString(old.website),
     images: [
       {
         building_id: old.id,
@@ -250,13 +211,11 @@ function escapeSql(value: unknown): string {
 
 function buildSeedSql(buildings: MappedBuilding[]): string {
   const lines: string[] = [];
-
   lines.push("-- Supabase seed file generated by scripts/migrate-data.ts");
   lines.push("-- Buildings: " + buildings.length);
   lines.push("");
-
-  // Ensure clean, idempotent seed. Use CASCADE to also clear building_images FKs.
   lines.push("TRUNCATE TABLE buildings CASCADE;");
+  lines.push("TRUNCATE TABLE building_images CASCADE;");
   lines.push("");
 
   for (const b of buildings) {
@@ -297,56 +256,30 @@ function buildSeedSql(buildings: MappedBuilding[]): string {
     );
 
     for (const img of b.images) {
-      lines.push(
-        `INSERT INTO building_images (building_id, image_url, image_type, source, is_primary) VALUES (` +
-          `${img.building_id}, ` +
-          `${escapeSql(img.image_url)}, ` +
-          `${escapeSql(img.type)}, ` +
-          `${escapeSql(img.source)}, ` +
-          `${img.is_primary}` +
-          `) ON CONFLICT DO NOTHING;`,
-      );
+      if (!img.image_url && img.type === "placeholder") {
+        lines.push(
+          `INSERT INTO building_images (building_id, image_url, type, source, is_primary) VALUES (${img.building_id}, NULL, 'placeholder', NULL, true) ON CONFLICT DO NOTHING;`,
+        );
+      } else {
+        lines.push(
+          `INSERT INTO building_images (building_id, image_url, type, source, is_primary) VALUES (${img.building_id}, ${escapeSql(img.image_url)}, '${img.type}', ${escapeSql(img.source)}, ${img.is_primary}) ON CONFLICT DO NOTHING;`,
+        );
+      }
     }
-
     lines.push("");
   }
 
   return lines.join("\n");
 }
 
-function printUsage() {
-  console.log("Usage: npx tsx scripts/migrate-data.ts [--json] [--data <path>]");
-}
-
 function main() {
   const args = process.argv.slice(2);
-
-  if (args.includes("--help") || args.includes("-h")) {
-    printUsage();
-    process.exit(0);
-  }
-
   const jsonMode = args.includes("--json");
-  const dataIndex = args.indexOf("--data");
-  const dataFile = dataIndex !== -1 && args[dataIndex + 1] ? path.resolve(args[dataIndex + 1]) : DATA_PATH;
+  const dataFile = args.find((arg, idx) => arg === "--data" && args[idx + 1]) ? args[args.indexOf("--data") + 1] : DATA_PATH;
 
-  // Auto-fetch data.json if it is missing (task fallback).
   if (!fs.existsSync(dataFile)) {
-    console.error(`data file not found at ${dataFile}`);
-    console.error("Attempting to fetch data.json from the original repository...");
-    try {
-      const tmpDir = "/tmp/alarm-old";
-      if (fs.existsSync(tmpDir)) {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
-      }
-      const cloneCmd = `git clone --depth 1 https://github.com/fvegiard/alarm-incendie-prospection ${tmpDir}`;
-      require("node:child_process").execSync(cloneCmd, { stdio: "inherit" });
-      fs.copyFileSync(path.join(tmpDir, "data.json"), dataFile);
-      console.error(`Copied data.json from ${tmpDir} to ${dataFile}`);
-    } catch (err) {
-      console.error("Failed to fetch data.json:", err instanceof Error ? err.message : String(err));
-      process.exit(1);
-    }
+    console.error(`Error: data file not found at ${dataFile}`);
+    process.exit(1);
   }
 
   const buildings = loadData(dataFile);
@@ -363,8 +296,8 @@ function main() {
   const seedSql = buildSeedSql(buildings);
   fs.writeFileSync(SEED_PATH, seedSql, "utf-8");
 
-  console.log(`Migrated ${buildings.length} buildings`);
-  console.log(`Wrote seed SQL to ${SEED_PATH}`);
+  console.log(`✓ Migrated ${buildings.length} buildings`);
+  console.log(`✓ Wrote seed SQL to ${SEED_PATH}`);
 }
 
 main();

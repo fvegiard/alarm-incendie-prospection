@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Building {
+  id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalId           String?             @unique @map("external_id") @db.Text
+  name                 String              @db.Text
+  address              String              @db.Text
+  city                 String              @default("Montréal") @db.Text
+  province             String              @default("QC") @db.Text
+  postalCode           String?             @map("postal_code") @db.Text
+  latitude             Decimal?            @db.Decimal(10, 7)
+  longitude            Decimal?            @db.Decimal(10, 7)
+  heightM              Decimal?            @map("height_m") @db.Decimal(6, 2)
+  floors               Int?
+  yearBuilt            Int?                @map("year_built")
+  usageType            String?             @map("usage_type") @db.Text
+  segment              String?             @db.Text
+  zone                 String?             @db.Text
+  priority             String              @default("medium") @db.Text
+  scoreAnciennete      Int                 @default(0) @map("score_anciennete")
+  scoreUsage           Int                 @default(0) @map("score_usage")
+  scoreHauteur         Int                 @default(0) @map("score_hauteur")
+  scoreTotal           Int                 @default(0) @map("score_total")
+  ownerName            String?             @map("owner_name") @db.Text
+  ownerContact         String?             @map("owner_contact") @db.Text
+  managementCompany    String?             @map("management_company") @db.Text
+  managementContact    String?             @map("management_contact") @db.Text
+  fireSystemType       String?             @map("fire_system_type") @db.Text
+  fireSystemStatus     String              @default("unknown") @map("fire_system_status") @db.Text
+  lastInspectionDate   DateTime?            @map("last_inspection_date") @db.Date
+  nextInspectionDate   DateTime?            @map("next_inspection_date") @db.Date
+  numberOfUnits        Int?                @map("number_of_units")
+  buildingType         String?             @map("building_type") @db.Text
+  assessedValue        Decimal?            @map("assessed_value") @db.Decimal(12, 2)
+  notes                String?             @db.Text
+  source               String              @default("prospection") @db.Text
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz()
+
+  images               BuildingImage[]
+  contacts             BuildingContact[]
+  inspections          Inspection[]
+
+  @@index([city])
+  @@index([priority])
+  @@index([segment])
+  @@index([zone])
+  @@map("buildings")
+}
+
+model BuildingImage {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buildingId  String   @map("building_id") @db.Uuid
+  imageUrl    String   @map("image_url") @db.Text
+  imageType   String   @default("streetview") @map("image_type") @db.Text
+  source      String   @default("google_streetview") @db.Text
+  width       Int?
+  height      Int?
+  isPrimary   Boolean  @default(false) @map("is_primary")
+  capturedAt  DateTime? @map("captured_at") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([buildingId])
+  @@map("building_images")
+}
+
+model BuildingContact {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buildingId  String   @map("building_id") @db.Uuid
+  contactType String?  @map("contact_type") @db.Text
+  name        String?  @db.Text
+  phone       String?  @db.Text
+  email       String?  @db.Text
+  company     String?  @db.Text
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([buildingId])
+  @@map("building_contacts")
+}
+
+model Inspection {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buildingId        String   @map("building_id") @db.Uuid
+  inspectionDate    DateTime @map("inspection_date") @db.Date
+  inspectionType    String?  @map("inspection_type") @db.Text
+  status            String   @default("scheduled") @db.Text
+  findings          String?  @db.Text
+  recommendations   String?  @db.Text
+  inspectorName     String?  @map("inspector_name") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  building Building @relation(fields: [buildingId], references: [id], onDelete: Cascade)
+
+  @@index([buildingId])
+  @@map("inspections")
+}
