@@ -10,6 +10,19 @@ export interface Building {
   annee: number;
   latitude: number;
   longitude: number;
+  hauteur_m?: number | null;
+  usage?: string | null;
+  statut_public?: string | null;
+  owner?: string | null;
+  management_company?: string | null;
+  score_anciennete?: number | null;
+  score_usage?: number | null;
+  score_hauteur?: number | null;
+  score_total?: number | null;
+  raison_priorisation?: string | null;
+  mode_action?: string | null;
+  fire_system_type?: string | null;
+  fire_system_status?: string | null;
 }
 
 const data = rawData as {
@@ -54,3 +67,15 @@ export function getCity(zone?: string): string {
   if (z.includes("brossard")) return "Brossard";
   return "Montréal";
 }
+
+export function getAddress(building: Building): string {
+  return `${building.immeuble}, ${building.zone}`;
+}
+
+export type Priority = "Élevée" | "Moyenne" | "Faible";
+
+export const priorityStyles: Record<Priority, string> = {
+  "Élevée": "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  "Moyenne": "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+  "Faible": "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+};

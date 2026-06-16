@@ -42,11 +42,11 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 };
+  const priorityOrder: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
   if (sortBy === 'priority') {
-    buildings.sort((a, b) => {
+    buildings.sort((a: { priority: string }, b: { priority: string }) => {
       const dir = sortOrder === 'asc' ? 1 : -1;
-      return dir * ((priorityOrder[a.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[b.priority as keyof typeof priorityOrder] || 0));
+      return dir * ((priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0));
     });
   }
 

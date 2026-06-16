@@ -1,11 +1,20 @@
 "use client";
 
-import { buildings } from "@/lib/data";
+import { buildings, getAddress } from "@/lib/data";
 import MapView from "@/components/MapView";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default function MapPage() {
+  const mapBuildings = buildings.map((b) => ({
+    id: b.id,
+    name: b.immeuble,
+    address: getAddress(b),
+    priority: b.priorite,
+    latitude: b.latitude,
+    longitude: b.longitude,
+  }));
+
   return (
     <div className="flex h-[calc(100vh-4rem)] flex-col bg-zinc-50 dark:bg-zinc-950">
       {/* Top bar */}
@@ -39,10 +48,9 @@ export default function MapPage() {
       {/* Full page map */}
       <div className="flex-1 overflow-hidden">
         <MapView
-          buildings={buildings}
+          buildings={mapBuildings}
           height="100%"
           zoom={11}
-          showClustering={true}
         />
       </div>
 

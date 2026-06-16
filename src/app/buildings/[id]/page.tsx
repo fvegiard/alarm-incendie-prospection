@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buildings, getBuildingById, getAddress, getCity, priorityStyles, Priority } from "@/lib/data";
+import { buildings, getBuildingById, getAddress, getCity, priorityStyles, Priority, Building } from "@/lib/data";
 import { ArrowLeft, MapPin, Calendar, Layers, Ruler, Building2, Flame, User, Users, ExternalLink } from "lucide-react";
 
 interface BuildingDetailProps {
@@ -28,6 +28,7 @@ export default async function BuildingDetailPage({ params }: BuildingDetailProps
   const city = getCity(building.zone);
   const priority = building.priorite as Priority;
   const priorityClass = priorityStyles[priority] || priorityStyles["Faible"];
+  const priorityBadgeClass = priorityClass;
 
   // Large Google Street View using lat/lng
   const streetViewUrl = `https://maps.googleapis.com/maps/api/streetview?size=1200x600&location=${building.latitude},${building.longitude}&key=YOUR_API_KEY&source=outdoor&fov=90`;
@@ -63,8 +64,8 @@ export default async function BuildingDetailPage({ params }: BuildingDetailProps
 
           {/* Priority badge overlay */}
           <div className="absolute left-6 top-6">
-            <span className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold ${priorityClass.badge}`}>
-              <span className={`h-2 w-2 rounded-full ${priorityClass.dot}`} />
+            <span className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold ${priorityBadgeClass}`}>
+              <span className="h-2 w-2 rounded-full bg-current opacity-60" />
               Priorité {building.priorite}
             </span>
           </div>
